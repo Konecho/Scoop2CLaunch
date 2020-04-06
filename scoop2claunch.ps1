@@ -1,8 +1,8 @@
-function Get-StartMenuShortcuts{
-    #$Shortcuts = Get-ChildItem -Recurse "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps" -Include *.lnk
+function FunCreateShortcuts{
+    param($ShortcutsSet)
     $Shell = New-Object -ComObject WScript.Shell
     $i=0
-    foreach ($Shortcut in $Shortcuts)
+    foreach ($Shortcut in $ShortcutsSet)
     {
         $ShortcutName = $Shortcut.Name
         $ShortcutFull = $Shortcut.FullName
@@ -35,36 +35,50 @@ function Get-StartMenuShortcuts{
 
 [Runtime.InteropServices.Marshal]::ReleaseComObject($Shell) | Out-Null
 }
+function FunCreatePage{
+    param($ShortcutsSet,$PageName)
+    $ShortcutsCount = $ShortcutsSet.Count
 
+    Write-Output "$ShortcutsCount Shortcuts will be add"
+
+    $regex = '\[Pages\]\r\nCount=(?<PageCount>[0-9]+)'
+
+    (Get-Content -Raw .\CLaunch.ini) -match $regex | Out-Null
+
+    $PageCountPlusOne = [int16]$Matches.PageCount + 1
+    (Get-Content -Raw .\CLaunch.ini) -replace $regex, "[Pages]`r`nCount=$PageCountPlusOne" | Set-Content .\CLaunch.ini
+
+    $NewPageNum = $Matches.PageCount.PadLeft(3, '0')
+    Add-Content -Path ".\CLaunch.ini" -Value "[Page$NewPageNum]"
+
+    Add-Content -Path ".\CLaunch.ini" -Value "Name=$PageName"
+
+    Add-Content -Path ".\CLaunch.ini" -Value "Count=$ShortcutsCount"
+
+    Add-Content -Path ".\CLaunch.ini" -Value 'ScrollMode1=0'
+    Add-Content -Path ".\CLaunch.ini" -Value 'ScrollMode2=0'
+    Add-Content -Path ".\CLaunch.ini" -Value 'Flag=00000000'
+    Add-Content -Path ".\CLaunch.ini" -Value ""
+
+}
 Write-Output "script started"
 
 Copy-Item .\CLaunch.ini -Destination .\OriginCLaunch.ini
 
-$Shortcuts = Get-ChildItem -Recurse "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps" -Include *.lnk
+#$Shortcuts = Get-ChildItem -Recurse "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps" -Include *.lnk
 
-$ShortcutsCount = $Shortcuts.Count
+# When using the -Include parameter, if you don't include an asterisk in the path
+# the command returns no output.
+# 什么弱智设定
 
-Write-Output "$ShortcutsCount Shortcuts will be add"
+$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\*" -Include *.lnk
 
-$regex = '\[Pages\]\r\nCount=(?<PageCount>[0-9]+)'
+FunCreatePage -ShortcutsSet $Shortcuts -PageName "Scoop Apps"
+FunCreateShortcuts -ShortcutsSet $Shortcuts
 
-(Get-Content -Raw .\CLaunch.ini) -match $regex | Out-Null
+$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\SysInternals\*" -Include *.lnk
 
-$PageCountPlusOne = [int16]$Matches.PageCount + 1
-(Get-Content -Raw .\CLaunch.ini) -replace $regex, "[Pages]`r`nCount=$PageCountPlusOne" | Set-Content .\CLaunch.ini
-
-$NewPageNum = $Matches.PageCount.PadLeft(3, '0')
-Add-Content -Path ".\CLaunch.ini" -Value "[Page$NewPageNum]"
-
-Add-Content -Path ".\CLaunch.ini" -Value "Name=Scoop Apps"
-
-Add-Content -Path ".\CLaunch.ini" -Value "Count=$ShortcutsCount"
-
-Add-Content -Path ".\CLaunch.ini" -Value 'ScrollMode1=0'
-Add-Content -Path ".\CLaunch.ini" -Value 'ScrollMode2=0'
-Add-Content -Path ".\CLaunch.ini" -Value 'Flag=00000000'
-Add-Content -Path ".\CLaunch.ini" -Value ""
-
-Get-StartMenuShortcuts
+FunCreatePage -ShortcutsSet $Shortcuts -PageName "SysInternals"
+FunCreateShortcuts -ShortcutsSet $Shortcuts
 
 Write-Output "script finished"

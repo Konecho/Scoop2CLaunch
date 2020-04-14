@@ -61,24 +61,44 @@ function FunCreatePage{
     Add-Content -Path ".\CLaunch.ini" -Value ""
 
 }
+function FunCreateMultiPage{
+    param($ShortcutsSet,$PageName)
+    $m = 4*20
+    $a=$ShortcutsSet
+    $z = for ($i = 0; $i -lt $a.length; $i += $m) { ,$a[$i..($i+$m-1)] }
+    $zc = $z.count
+
+    Write-Output "ShortcutsSet $PageName was devided into $zc parts"
+
+    for ($j = 0; $j -lt $zc; $j += 1) {
+        FunCreatePage -ShortcutsSet $z[$j] -PageName "$PageName ($j)"
+        FunCreateShortcuts -ShortcutsSet $z[$j]
+    }
+}
 Write-Output "script started"
 
 Copy-Item .\CLaunch.ini -Destination .\OriginCLaunch.ini
-
-#$Shortcuts = Get-ChildItem -Recurse "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps" -Include *.lnk
 
 # When using the -Include parameter, if you don't include an asterisk in the path
 # the command returns no output.
 # 什么弱智设定
 
+###Scoop Apps
 $Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\*" -Include *.lnk
 
 FunCreatePage -ShortcutsSet $Shortcuts -PageName "Scoop Apps"
 FunCreateShortcuts -ShortcutsSet $Shortcuts
 
+###SysInternals
 $Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\SysInternals\*" -Include *.lnk
 
 FunCreatePage -ShortcutsSet $Shortcuts -PageName "SysInternals"
 FunCreateShortcuts -ShortcutsSet $Shortcuts
 
+###NirSoft
+$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\NirSoft\*" -Include *.lnk
+
+FunCreateMultiPage -ShortcutsSet $Shortcuts -PageName "NirSoft"
+
+###
 Write-Output "script finished"

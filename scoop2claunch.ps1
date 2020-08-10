@@ -61,6 +61,30 @@ function FunCreatePage{
     Add-Content -Path ".\CLaunch.ini" -Value ""
 
 }
+function FunCreateSubMenu{
+    param($ShortcutsSet,$SubMenuName,$SubMenuPage,$SubMenuButton)
+    $ShortcutsCount = $ShortcutsSet.Count
+
+    Write-Output "$ShortcutsCount Shortcuts will be add"
+
+    $regex = '\[SubMenus\]\r\nCount=(?<SubMenusCount>[0-9]+)'
+
+    (Get-Content -Raw .\CLaunch.ini) -match $regex | Out-Null
+
+    $SubMenusCountPlusOne = [int16]$Matches.SubMenusCount + 1
+    (Get-Content -Raw .\CLaunch.ini) -replace $regex, "[SubMenus]`r`nCount=$SubMenusCountPlusOne" | Set-Content .\CLaunch.ini
+
+    $NewSubMenuNum = $Matches.SubMenusCount.PadLeft(3, '0')
+    Add-Content -Path ".\CLaunch.ini" -Value "[Page$NewSubMenuNum]"
+
+    Add-Content -Path ".\CLaunch.ini" -Value "Page=$SubMenuPage"
+    
+    Add-Content -Path ".\CLaunch.ini" -Value "Button=$SubMenuButton"
+
+    Add-Content -Path ".\CLaunch.ini" -Value "Count=$ShortcutsCount"
+
+
+}
 function FunCreateMultiPage{
     param($ShortcutsSet,$PageName)
     $m = 4*20
@@ -81,24 +105,30 @@ Copy-Item .\CLaunch.ini -Destination .\OriginCLaunch.ini
 
 # When using the -Include parameter, if you don't include an asterisk in the path
 # the command returns no output.
-# 什么弱智设定
+
 
 ###Scoop Apps
 $Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\*" -Include *.lnk
 
 FunCreatePage -ShortcutsSet $Shortcuts -PageName "Scoop Apps"
 FunCreateShortcuts -ShortcutsSet $Shortcuts
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ###SysInternals
-$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\SysInternals\*" -Include *.lnk
+#$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\SysInternals\*" -Include *.lnk
 
-FunCreatePage -ShortcutsSet $Shortcuts -PageName "SysInternals"
+#FunCreatePage -ShortcutsSet $Shortcuts -PageName "SysInternals"
+#FunCreateShortcuts -ShortcutsSet $Shortcuts
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+###WinPython
+$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\WinPython\*" -Include *.lnk
+
+FunCreateSubMenu -ShortcutsSet $Shortcuts -PageName "WinPython" -SubMenuPage "0000" -SubMenuButton "8"
 FunCreateShortcuts -ShortcutsSet $Shortcuts
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ###NirSoft
-$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\NirSoft\*" -Include *.lnk
+#$Shortcuts = Get-ChildItem "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Scoop Apps\NirSoft\*" -Include *.lnk
 
-FunCreateMultiPage -ShortcutsSet $Shortcuts -PageName "NirSoft"
-
+#FunCreateMultiPage -ShortcutsSet $Shortcuts -PageName "NirSoft"
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ###
 Write-Output "script finished"
